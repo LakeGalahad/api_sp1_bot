@@ -19,7 +19,11 @@ CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 
 def parse_homework_status(homework):
     homework_name = homework.get('homework_name')
+    if homework_name is None:
+        return 'Что-то пошло не так. Домашки нет!'
     homework_status = homework.get('status')
+    if homework_status is None:
+        return 'Что-то пошло не так. Статуса домашки нет!'
     if homework_status == 'rejected':
         verdict = 'К сожалению в работе нашлись ошибки.'
     elif homework_status == 'reviewing':
@@ -32,6 +36,8 @@ def parse_homework_status(homework):
 
 
 def get_homework_statuses(current_timestamp):
+    if current_timestamp is None:
+        current_timestamp = int(time.time())
     params = {
         'from_date': current_timestamp
     }
@@ -39,11 +45,15 @@ def get_homework_statuses(current_timestamp):
         'Authorization': f'OAuth {PRAKTIKUM_TOKEN}'
     }
     url = 'https://praktikum.yandex.ru/api/user_api/homework_statuses/'
-    homework_statuses = requests.get(
-        url=url,
-        params=params,
-        headers=headers
-    )
+    try:
+        homework_statuses = requests.get(
+            url=url,
+            params=params,
+            headers=headers
+        )
+    except requests.RequestException as e:
+        logging.error(e, exc_info=True)
+        return None
     return homework_statuses.json()
 
 
